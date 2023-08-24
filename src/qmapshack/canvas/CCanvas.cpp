@@ -142,14 +142,14 @@ CCanvas::CCanvas(QWidget* parent, const QString& name) : QWidget(parent) {
   labelTrackInfo->setAutoFillBackground(true);
   labelTrackInfo->hide();
 
-  connect(map, &CMapDraw::sigStartThread, mapLoadIndicator, &QLabel::show);
-  connect(map, &CMapDraw::sigStopThread, mapLoadIndicator, &QLabel::hide);
+  connect(map, &CMapDraw::sigRedrawStarted, mapLoadIndicator, &QLabel::show);
+  connect(map, &CMapDraw::sigRedrawFinished, mapLoadIndicator, &QLabel::hide);
 
-  connect(poi, &CPoiDraw::sigStartThread, poiLoadIndicator, &QLabel::show);
-  connect(poi, &CPoiDraw::sigStopThread, poiLoadIndicator, &QLabel::hide);
+  connect(poi, &CPoiDraw::sigRedrawStarted, poiLoadIndicator, &QLabel::show);
+  connect(poi, &CPoiDraw::sigRedrawFinished, poiLoadIndicator, &QLabel::hide);
 
-  connect(dem, &CDemDraw::sigStartThread, demLoadIndicator, &QLabel::show);
-  connect(dem, &CDemDraw::sigStopThread, demLoadIndicator, &QLabel::hide);
+  connect(dem, &CDemDraw::sigRedrawStarted, demLoadIndicator, &QLabel::show);
+  connect(dem, &CDemDraw::sigRedrawFinished, demLoadIndicator, &QLabel::hide);
 
   timerTrackOnFocus = new QTimer(this);
   timerTrackOnFocus->setSingleShot(false);
@@ -171,10 +171,10 @@ CCanvas::~CCanvas() {
 
   /* stop running drawing-threads and don't destroy unless they have finished*/
   for (IDrawContext* context : qAsConst(allDrawContext)) {
-    context->quit();
+    context->cancelRedraw();
   }
   for (IDrawContext* context : qAsConst(allDrawContext)) {
-    context->wait();
+    context->waitForRedrawFinished();
   }
 
   /*
@@ -561,11 +561,11 @@ void CCanvas::paintEvent(QPaintEvent*) {
   // ----- start to draw fast content -----
 
   grid->draw(p, rect());
-  if (map->isFinished() && dem->isFinished()) {
-    if (gis->isFinished()) {
+  if (map->isRedrawFinished() && dem->isRedrawFinished()) {
+    if (gis->isRedrawFinished()) {
       gis->draw(p, rect());
     }
-    if (rt->isFinished()) {
+    if (rt->isRedrawFinished()) {
       rt->draw(p, rect());
     }
   }
@@ -1160,7 +1160,7 @@ void CCanvas::print(QPainter& p, const QRectF& area, const QPointF& focus, bool 
   }
 
   for (IDrawContext* context : qAsConst(allDrawContext)) {
-    context->wait();
+    context->waitForRedrawFinished();
   }
 
   for (IDrawContext* context : qAsConst(allDrawContext)) {

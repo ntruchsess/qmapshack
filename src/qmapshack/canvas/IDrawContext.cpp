@@ -18,6 +18,7 @@
 
 #include "canvas/IDrawContext.h"
 
+#include <QtConcurrent>
 #include <QtWidgets>
 
 #define BUFFER_BORDER 50
@@ -40,7 +41,7 @@ QPointF operator*(const QPointF& p1, const QPointF& p2) { return QPointF(p1.x() 
 QPointF operator/(const QPointF& p1, const QPointF& p2) { return QPointF(p1.x() / p2.x(), p1.y() / p2.y()); }
 
 IDrawContext::IDrawContext(const QString& name, CCanvas::redraw_e maskRedraw, CCanvas* parent)
-    : QThread(parent), canvas(parent), maskRedraw(maskRedraw) {
+    : QObject(parent), canvas(parent), maskRedraw(maskRedraw) {
   setObjectName(name);
 
   IDrawContext::setScales(CCanvas::eScalesDefault);
@@ -48,8 +49,8 @@ IDrawContext::IDrawContext(const QString& name, CCanvas::redraw_e maskRedraw, CC
   zoom(5);
 
   resize(canvas->size());
-  connect(this, &IDrawContext::finished, canvas, static_cast<void (CCanvas::*)()>(&CCanvas::update));
-  connect(this, &IDrawContext::finished, this, &IDrawContext::sigStopThread);
+  connect(this, &IDrawContext::sigRedrawFinished, canvas, static_cast<void (CCanvas::*)()>(&CCanvas::update));
+  connect(&futureWatcher, &QFutureWatcher<void>::finished, this, &IDrawContext::slotRedrawFinished);
 }
 
 IDrawContext::~IDrawContext() {}
@@ -62,12 +63,7 @@ bool IDrawContext::resize(const QSize& size) {
     return true;
   }
 
-  if (isRunning() && !wait(100)) {
-    // blocked by thread, reschedule
-    return false;
-  }
-
-  QMutexLocker lock(&mutex);
+  // qDebug() << "resize" << objectName() << "bufIndex: " << bufIndex;
 
   lastSize = size;
   viewWidth = size.width();
@@ -77,11 +73,8 @@ bool IDrawContext::resize(const QSize& size) {
   bufWidth = viewWidth + 2 * BUFFER_BORDER;
   bufHeight = viewHeight + 2 * BUFFER_BORDER;
 
-  buffer[0].image = QImage(bufWidth, bufHeight, QImage::Format_ARGB32);
-  buffer[0].image.fill(Qt::transparent);
-
-  buffer[1].image = QImage(bufWidth, bufHeight, QImage::Format_ARGB32);
-  buffer[1].image.fill(Qt::transparent);
+  buffer[bufIndex].image = QImage(bufWidth, bufHeight, QImage::Format_ARGB32);
+  buffer[bufIndex].image.fill(Qt::transparent);
 
   return true;
 }
@@ -112,12 +105,7 @@ void IDrawContext::setScales(const CCanvas::scales_type_e type) {
   }
 }
 
-bool IDrawContext::needsRedraw() const {
-  mutex.lock();
-  bool res = intNeedsRedraw;
-  mutex.unlock();
-  return res;
-}
+bool IDrawContext::needsRedraw() const { return intNeedsRedraw; }
 
 void IDrawContext::zoom(const QRectF& rect) {
   if (!proj.isValid()) {
@@ -158,7 +146,6 @@ void IDrawContext::zoom(int idx) {
   idx = qMax(idx, 0);
   idx = qMin(idx, zoomLevels - 1);
 
-  mutex.lock();  // --------- start serialize with thread
   if ((zoomIndex != idx) || (zoomFactor.x() != scales[idx])) {
     zoomIndex = idx;
     zoomFactor.rx() = scales[idx];
@@ -167,7 +154,6 @@ void IDrawContext::zoom(int idx) {
     emit sigNeedsRedraw();
     emit sigScaleChanged(scale * zoomFactor);
   }
-  mutex.unlock();  // --------- stop serialize with thread
 }
 
 void IDrawContext::convertRad2M(QPointF& p) const {
@@ -214,36 +200,26 @@ void IDrawContext::convertM2Rad(QPointF& p) const {
 }
 
 void IDrawContext::convertPx2Rad(QPointF& p) const {
-  mutex.lock();  // --------- start serialize with thread
-
   QPointF f = focus;
   convertRad2M(f);
 
   p = f + (p - center) * scale * zoomFactor;
 
   convertM2Rad(p);
-
-  mutex.unlock();  // --------- stop serialize with thread
 }
 
 void IDrawContext::convertRad2Px(QPointF& p) const {
-  mutex.lock();  // --------- start serialize with thread
-
   QPointF f = focus;
   convertRad2M(f);
   convertRad2M(p);
 
   p = (p - f) / (scale * zoomFactor) + center;
-
-  mutex.unlock();  // --------- stop serialize with thread
 }
 
 void IDrawContext::convertRad2Px(QPolygonF& poly) const {
   if (!proj.isValid()) {
     return;
   }
-
-  mutex.lock();  // --------- start serialize with thread
 
   QPointF f = focus;
   convertRad2M(f);
@@ -298,14 +274,14 @@ void IDrawContext::convertRad2Px(QPolygonF& poly) const {
 
     *pPt = (*pPt - f) / (scale * zoomFactor) + center;
   }
-
-  mutex.unlock();  // --------- stop serialize with thread
 }
 
 void IDrawContext::draw(QPainter& p, CCanvas::redraw_e needsRedraw, const QPointF& f) {
   if (!proj.isValid()) {
     return;
   }
+
+  // qDebug() << "draw" << objectName() << "bufIndex:" << bufIndex;
 
   // convert global coordinate of focus into point of map
   focus = f;
@@ -314,8 +290,6 @@ void IDrawContext::draw(QPainter& p, CCanvas::redraw_e needsRedraw, const QPoint
   convertRad2M(f1);
 
   QPointF bufferScale = scale * zoomFactor;
-
-  mutex.lock();  // --------- start serialize with thread
 
   // derive references for all corners coordinate of map buffer
   ref1 = f1 + QPointF(-bufWidth / 2, -bufHeight / 2) * bufferScale;
@@ -371,47 +345,59 @@ void IDrawContext::draw(QPainter& p, CCanvas::redraw_e needsRedraw, const QPoint
   if (needsRedraw & maskRedraw) {
     intNeedsRedraw = true;
     emit sigNeedsRedraw();
-  }
-  mutex.unlock();  // --------- stop serialize with thread
-
-  if ((needsRedraw & maskRedraw) && !isRunning()) {
-    emit sigStartThread();
-    start();
+    // qDebug() << "needsRedraw" << objectName();
+    if (futureWatcher.isFinished()) {
+      startRedraw();
+    }
   }
 }
 
-void IDrawContext::run() {
-  mutex.lock();
-  QElapsedTimer t;
-  t.start();
-  //    qDebug() << "start thread" << objectName();
+void IDrawContext::startRedraw() {
+  bool redrawIndex = !bufIndex;
+  // qDebug() << "startRecalc" << objectName() << "recalcIndex:" << recalcIndex;
 
-  IDrawContext::buffer_t& currentBuffer = buffer[!bufIndex];
-  while (intNeedsRedraw) {
-    // copy all projection information need by the
-    // map render objects to buffer structure
-    currentBuffer.zoomFactor = zoomFactor;
-    currentBuffer.scale = scale;
-    currentBuffer.ref1 = ref1;
-    currentBuffer.ref2 = ref2;
-    currentBuffer.ref3 = ref3;
-    currentBuffer.ref4 = ref4;
-    currentBuffer.focus = focus;
-    intNeedsRedraw = false;
-
-    mutex.unlock();
-
-    //        qDebug() << "bufferScale" << (currentBuffer.scale * currentBuffer.zoomFactor);
-    // ----- reset buffer -----
-    currentBuffer.image.fill(Qt::transparent);
-
-    drawt(currentBuffer);
-
-    mutex.lock();
+  if (!futureWatcher.isFinished()) {
+    qWarning() << objectName() << "previous recalc is not yet finished";
+    return;
   }
-  // ----- switch buffer ------
-  bufIndex = !bufIndex;
-  //    qDebug() << "stop thread" << objectName() << "after" << t.elapsed() << "ms";
 
-  mutex.unlock();
+  intNeedsRedraw = false;
+
+  buffer_t& currentBuffer = buffer[redrawIndex];
+  currentBuffer.zoomFactor = zoomFactor;
+  currentBuffer.scale = scale;
+  currentBuffer.ref1 = ref1;
+  currentBuffer.ref2 = ref2;
+  currentBuffer.ref3 = ref3;
+  currentBuffer.ref4 = ref4;
+  currentBuffer.focus = focus;
+  if (currentBuffer.image.width() != bufWidth || currentBuffer.image.height() != bufHeight) {
+    currentBuffer.image = QImage(bufWidth, bufHeight, QImage::Format_ARGB32);
+  }
+  currentBuffer.image.fill(Qt::transparent);
+
+  emit sigRedrawStarted();
+
+  futureWatcher.setFuture(QtConcurrent::run(this, &IDrawContext::redraw, redrawIndex));
 }
+
+bool IDrawContext::redraw(bool index) {
+  // qDebug() << "recalc" << objectName() << "index:" << index;
+  drawt(buffer[index]);
+  return index;
+}
+
+void IDrawContext::slotRedrawFinished() {
+  bufIndex = futureWatcher.result();
+  // qDebug() << "recalcFinished" << objectName() << "bufIndex:" << bufIndex;
+  if (intNeedsRedraw) {
+    startRedraw();
+  }
+  emit sigRedrawFinished();
+}
+
+void IDrawContext::cancelRedraw() { futureWatcher.cancel(); }
+
+void IDrawContext::waitForRedrawFinished() { futureWatcher.waitForFinished(); }
+
+bool IDrawContext::isRedrawFinished() const { return futureWatcher.isFinished(); }

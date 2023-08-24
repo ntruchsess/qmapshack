@@ -20,16 +20,14 @@
 #define IDRAWCONTEXT_H
 
 #include <QImage>
-#include <QMutex>
 #include <QPointF>
-#include <QThread>
 
 #include "canvas/CCanvas.h"
 #include "gis/proj_x.h"
 
 #define CANVAS_MAX_ZOOM_LEVELS 31
 
-class IDrawContext : public QThread {
+class IDrawContext : public QObject {
   Q_OBJECT
  public:
   IDrawContext(const QString& name, CCanvas::redraw_e maskRedraw, CCanvas* parent);
@@ -130,10 +128,14 @@ class IDrawContext : public QThread {
 
   virtual void setScales(const CCanvas::scales_type_e type);
 
+  void cancelRedraw();
+  void waitForRedrawFinished();
+  bool isRedrawFinished() const;
+
  signals:
   void sigCanvasUpdate(CCanvas::redraw_e flags);
-  void sigStartThread();
-  void sigStopThread();
+  void sigRedrawStarted();
+  void sigRedrawFinished();
   void sigScaleChanged(const QPointF& scale);
   void sigNeedsRedraw();
 
@@ -141,7 +143,6 @@ class IDrawContext : public QThread {
   void emitSigCanvasUpdate();
 
  protected:
-  void run() override;
   /**
      @brief The draw method called from the thread.
 
@@ -157,8 +158,8 @@ class IDrawContext : public QThread {
   static const qreal scalesDefault[];
   static const qreal scalesSquare[];
 
-  /// the mutex to serialize access
-  mutable QMutex mutex;
+  /// the futureWatcher to signal finish of redraw
+  QFutureWatcher<bool> futureWatcher;
 
   /// internal needs redraw flag
   bool intNeedsRedraw;
@@ -190,7 +191,13 @@ class IDrawContext : public QThread {
   /// index into scales table
   int zoomIndex = 0;
 
+ private slots:
+  void slotRedrawFinished();
+
  private:
+  void startRedraw();
+  bool redraw(bool index);
+
   /// the used scales and the type of scale levels
   const qreal* scales = nullptr;
   CCanvas::scales_type_e scalesType;

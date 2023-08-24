@@ -112,7 +112,7 @@ void CMapDraw::loadMapPath(QSettings& cfg) {
 }
 
 void CMapDraw::getInfo(const QPoint& px, QString& str) {
-  if (isRunning()) {
+  if (!isRedrawFinished()) {
     return;
   }
   CMapItem::mutexActiveMaps.lock();
@@ -134,7 +134,7 @@ void CMapDraw::getInfo(const QPoint& px, QString& str) {
 }
 
 void CMapDraw::getToolTip(const QPoint& px, QString& str) {
-  if (isRunning()) {
+  if (!isRedrawFinished()) {
     return;
   }
   CMapItem::mutexActiveMaps.lock();
@@ -158,7 +158,7 @@ void CMapDraw::getToolTip(const QPoint& px, QString& str) {
 IPoiItem CMapDraw::findPOICloseBy(const QPoint& px) const {
   IPoiItem poi;
 
-  if (isRunning()) {
+  if (!isRedrawFinished()) {
     return poi;
   }
   CMapItem::mutexActiveMaps.lock();
@@ -186,7 +186,7 @@ IPoiItem CMapDraw::findPOICloseBy(const QPoint& px) const {
 }
 
 bool CMapDraw::findPolylineCloseBy(const QPointF& pt1, const QPointF& pt2, qint32 threshold, QPolygonF& polyline) {
-  if (isRunning()) {
+  if (!isRedrawFinished()) {
     return false;
   }
   bool res = false;

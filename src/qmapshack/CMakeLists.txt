@@ -993,6 +993,7 @@ target_link_libraries(${APPLICATION_NAME}
     Qt5::WebEngineWidgets
     Qt5::Qml
     Qt5::Help
+    Qt5::Concurrent
     ${DBUS_LIB}
     ${GDAL_LIBRARIES}
     ${PROJ_LIBRARIES}

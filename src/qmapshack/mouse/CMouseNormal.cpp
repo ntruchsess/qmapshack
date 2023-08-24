@@ -227,7 +227,7 @@ bool CMouseNormal::setScreenOption(const QPoint& pt, IGisItem* item) {
 
 void CMouseNormal::draw(QPainter& p, CCanvas::redraw_e needsRedraw, const QRect& rect) {
   // no mouse interaction while gis thread is running
-  if (gis->isRunning()) {
+  if (!gis->isRedrawFinished()) {
     return;
   }
 
