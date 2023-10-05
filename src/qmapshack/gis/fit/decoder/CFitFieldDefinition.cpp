@@ -63,7 +63,7 @@ quint8 CFitFieldDefinition::getDefNr() const { return defNr; }
 quint8 CFitFieldDefinition::getDevDataIdx() const { return devDataIdx; }
 
 QPair<quint8, quint8> CFitFieldDefinition::getDevProfileId() const {
-  return qMakePair<quint8, quint8>(devDataIdx, defNr);
+  return QPair<quint8, quint8>(devDataIdx, defNr);
 }
 
 quint8 CFitFieldDefinition::getSize() const { return size; }

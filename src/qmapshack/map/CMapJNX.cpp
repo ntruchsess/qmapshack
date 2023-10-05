@@ -151,12 +151,12 @@ void CMapJNX::readFile(const QString& fn, qint32& productId) {
 
     if (hdr.version > 3) {
       quint32 dummy;
-      QTextCodec* codec = QTextCodec::codecForName("utf-8");
+      QStringDecoder decoder = QStringDecoder(QStringDecoder::Utf8);
       QByteArray ba;
 
       stream >> dummy;
       readCString(stream, ba);
-      level.copyright1 = codec->toUnicode(ba);
+      level.copyright1 = decoder.decode(ba);
       copyright += level.copyright1 + "\n";
     }
     qDebug() << i << Qt::hex << level.nTiles << level.offset << level.scale;
@@ -165,7 +165,7 @@ void CMapJNX::readFile(const QString& fn, qint32& productId) {
   quint32 infoBlockVersion;
   stream >> infoBlockVersion;
   if (infoBlockVersion == 0x9) {
-    QTextCodec* codec = QTextCodec::codecForName("utf-8");
+    QStringDecoder decoder = QStringDecoder(QStringDecoder::Utf8);
     QByteArray ba;
     quint8 dummy;
     QString groupId;
@@ -173,13 +173,13 @@ void CMapJNX::readFile(const QString& fn, qint32& productId) {
     QString groupTitle;
 
     readCString(stream, ba);
-    groupId = codec->toUnicode(ba);
+    groupId = decoder.decode(ba);
     readCString(stream, ba);
-    groupName = codec->toUnicode(ba);
+    groupName = decoder.decode(ba);
 
     stream >> dummy >> dummy >> dummy;
     readCString(stream, ba);
-    groupTitle = codec->toUnicode(ba);
+    groupTitle = decoder.decode(ba);
     qDebug() << groupId << groupName << groupTitle;
 
     for (quint32 i = 0; i < hdr.details; i++) {
@@ -187,11 +187,11 @@ void CMapJNX::readFile(const QString& fn, qint32& productId) {
 
       stream >> level.level;
       readCString(stream, ba);
-      level.name1 = codec->toUnicode(ba);
+      level.name1 = decoder.decode(ba);
       readCString(stream, ba);
-      level.name2 = codec->toUnicode(ba);
+      level.name2 = decoder.decode(ba);
       readCString(stream, ba);
-      level.copyright2 = codec->toUnicode(ba);
+      level.copyright2 = decoder.decode(ba);
       copyright += level.copyright2 + "\n";
     }
   }

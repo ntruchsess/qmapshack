@@ -487,7 +487,7 @@ QString CGisItemTrk::getInfo(quint32 feature) const {
     }
 
     QString desc = removeHtml(trk.desc).simplified();
-    if (desc.count()) {
+    if (desc.size()) {
       if (!str.isEmpty()) {
         str += "<br/>\n";
       }
@@ -495,7 +495,7 @@ QString CGisItemTrk::getInfo(quint32 feature) const {
     }
 
     QString cmt = removeHtml(trk.cmt).simplified();
-    if ((cmt != desc) && cmt.count()) {
+    if ((cmt != desc) && cmt.size()) {
       if (!str.isEmpty()) {
         str += "<br/>\n";
       }
@@ -537,14 +537,14 @@ QString CGisItemTrk::getInfoRange() const {
   }
 
   bool timeIsValid = pt1->time.isValid() && pt2->time.isValid();
-  qreal deltaTime = pt2->time.toTime_t() - pt1->time.toTime_t();
+  qreal deltaTime = pt1->time.secsTo(pt2->time);
 
   const qreal distance = pt2->distance - pt1->distance;
 
   IUnit::self().meter2distance(distance, val, unit);
   str += QString("%3 %1%2 ").arg(val, unit).arg(QChar(0x21A6));
   if (timeIsValid) {
-    quint32 t = pt2->time.toTime_t() - pt1->time.toTime_t();
+    quint32 t = pt1->time.secsTo(pt2->time);
     quint32 hh = t / 3600;
     quint32 mm = (t % 3600) / 60;
     quint32 ss = t % 60;
@@ -686,7 +686,7 @@ QString CGisItemTrk::getInfoRange(const CTrackData::trkpt_t& trkpt1, const CTrac
   }
 
   if (pt1.time.isValid() && pt2.time.isValid()) {
-    dt = pt2.time.toTime_t() - pt1.time.toTime_t();
+    dt = pt1.time.secsTo(pt2.time);
   }
 
   QString asc = tr("Ascent: -");
@@ -2309,7 +2309,7 @@ bool CGisItemTrk::setMouseFocusByTime(quint32 time, focusmode_e fmode, const QSt
         continue;
       }
 
-      qreal d = qAbs(qreal(pt.time.toTime_t()) - qreal(time));
+      qreal d = qAbs(qreal(pt.time.toSecsSinceEpoch()) - qreal(time));
       if (d <= delta) {
         newPointOfFocus = &pt;
         delta = d;

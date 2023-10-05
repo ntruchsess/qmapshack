@@ -37,8 +37,8 @@ set( RCS
 # Some Qt magic
 ###############################################################################################
 
-qt5_wrap_ui(UI_HDRS ${UIS})
-qt5_add_resources(RC_SRCS ${RCS})
+qt6_wrap_ui(UI_HDRS ${UIS})
+qt6_add_resources(RC_SRCS ${RCS})
 
 ###############################################################################################
 # Translation related stuff
@@ -90,7 +90,7 @@ target_compile_definitions(${APPLICATION_NAME} PUBLIC
 )
 
 target_link_libraries(${APPLICATION_NAME}
-    Qt5::Core
+    Qt6::Core
     ${GDAL_LIBRARIES}
     ${PROJ_LIBRARIES}
 )

@@ -366,12 +366,12 @@ QString CGisItemRte::getInfo(quint32 feature) const {
   }
 
   QString desc = removeHtml(rte.desc).simplified();
-  if (desc.count()) {
+  if (desc.size()) {
     if (!str.isEmpty()) {
       str += "<br/>\n";
     }
 
-    if ((feature & eFeatureShowFullText) || (desc.count() < 300)) {
+    if ((feature & eFeatureShowFullText) || (desc.size() < 300)) {
       str += desc;
     } else {
       str += desc.left(297) + "...";
@@ -379,12 +379,12 @@ QString CGisItemRte::getInfo(quint32 feature) const {
   }
 
   QString cmt = removeHtml(rte.cmt).simplified();
-  if ((cmt != desc) && cmt.count()) {
+  if ((cmt != desc) && cmt.size()) {
     if (!str.isEmpty()) {
       str += "<br/>\n";
     }
 
-    if ((feature & eFeatureShowFullText) || cmt.count() < 300) {
+    if ((feature & eFeatureShowFullText) || cmt.size() < 300) {
       str += cmt;
     } else {
       str += cmt.left(297) + "...";
@@ -556,7 +556,7 @@ void CGisItemRte::drawItem(QPainter& p, const QRectF& /*viewport*/, CGisDraw* gi
     p.drawEllipse(anchor, 5, 5);
 
     QString str, val, unit;
-    IUnit::self().seconds2time((mouseMoveFocus->time.toTime_t() - startTime.toTime_t()), val, unit);
+    IUnit::self().seconds2time(startTime.secsTo(mouseMoveFocus->time), val, unit);
     str += tr("Time: %1%2").arg(val, unit) + " ";
     IUnit::self().meter2distance(mouseMoveFocus->distance, val, unit);
     str += tr("Distance: %1%2").arg(val, unit);
@@ -803,7 +803,7 @@ void CGisItemRte::setResult(Routino_Output* route, const QString& options) {
       rtept->fakeSubpt.instruction = QString(next->desc1) + ".\n" + QString(next->desc2) + ".";
 
       rte.totalDistance = rtept->fakeSubpt.distance;
-      rte.totalTime = rtept->fakeSubpt.time.toTime_t() - time.toTime_t();
+      rte.totalTime = time.secsTo(rtept->fakeSubpt.time);
     } else if (rtept != nullptr) {
       rtept->subpts << subpt_t();
       subpt_t& subpt = rtept->subpts.last();
@@ -826,7 +826,7 @@ void CGisItemRte::setResult(Routino_Output* route, const QString& options) {
       }
 
       rte.totalDistance = subpt.distance;
-      rte.totalTime = subpt.time.toTime_t() - time.toTime_t();
+      rte.totalTime = time.secsTo(subpt.time);
       subpt.instruction = QString(next->desc1) + ".\n" + QString(next->desc2) + ".";
     }
 
@@ -1096,13 +1096,13 @@ void CGisItemRte::setResultFromBRouter(const QDomDocument& xml, const QString& o
     if (node.isComment()) {
       const QString& commentTxt = node.toComment().data();
       // ' track-length = 180864 filtered ascend = 428 plain-ascend = -172 cost=270249 '
-      const QRegExp rxAscDes(
+      const static QRegularExpression rxAscDes(
           "(\\s*track-length\\s*=\\s*)(-?\\d+)(\\s*)(filtered "
           "ascend\\s*=\\s*-?\\d+)(\\s*)(plain-ascend\\s*=\\s*-?\\d+)(\\s*)(cost\\s*=\\s*-?\\d+)(\\s*)");
-      int pos = rxAscDes.indexIn(commentTxt);
-      if (pos > -1) {
-        rte.totalDistance = rxAscDes.cap(2).toFloat();
-        rte.cmt = QString("%1, %2, %3").arg(rxAscDes.cap(4), rxAscDes.cap(6), rxAscDes.cap(8));
+      QRegularExpressionMatch match;
+      if ((match = rxAscDes.match(commentTxt)).hasMatch()) {
+        rte.totalDistance = match.captured(2).toFloat();
+        rte.cmt = QString("%1, %2, %3").arg(match.captured(4), match.captured(6), match.captured(8));
       }
       break;
     }

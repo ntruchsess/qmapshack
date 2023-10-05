@@ -70,21 +70,21 @@ void CRouterBRouterTilesSelectArea::paintEvent(QPaintEvent* event) {
 
 void CRouterBRouterTilesSelectArea::mouseMoveEvent(QMouseEvent* event) {
   if (event->buttons() == Qt::LeftButton) {
-    canvas->moveMap(QPointF(event->pos() - mousePos));
-    mousePos = event->pos();
+    canvas->moveMap(QPointF(event->position().toPoint() - mousePos));
+    mousePos = event->position().toPoint();
   }
 }
 
 void CRouterBRouterTilesSelectArea::mousePressEvent(QMouseEvent* event) {
   if (event->buttons() == Qt::LeftButton) {
-    startPos = mousePos = event->pos();
+    startPos = mousePos = event->position().toPoint();
   }
   button = event->buttons();
 }
 
 void CRouterBRouterTilesSelectArea::mouseReleaseEvent(QMouseEvent* event) {
   if (button == Qt::LeftButton) {
-    const QPoint& pos = event->pos();
+    const QPoint& pos = event->position().toPoint();
     canvas->moveMap(QPointF(pos - mousePos));
     if (pos == startPos) {
       emit sigTileClicked(tileUnderMouse(pos));

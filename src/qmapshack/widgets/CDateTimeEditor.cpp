@@ -144,7 +144,7 @@ void CDateTimeEditor::paintEvent(QPaintEvent* /*event*/) {
 }
 
 void CDateTimeEditor::mousePressEvent(QMouseEvent* event) {
-  const int p = getNearestEditablePosition(event->pos());
+  const int p = getNearestEditablePosition(event->position().toPoint());
   if (p >= 0) {
     m_selectedPosition = p;
     m_selectedGroup = m_characters[m_selectedPosition].m_group;

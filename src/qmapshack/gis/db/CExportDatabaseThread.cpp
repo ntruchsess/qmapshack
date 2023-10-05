@@ -41,7 +41,8 @@ void CExportDatabaseThread::start(const QString& path, bool saveAsGpx11) {
 
 QString CExportDatabaseThread::simplifyString(const QString& str) const {
   QString s = str;
-  return s.replace(QRegExp("[^\\w\\d]"), "_");
+  const static QRegularExpression re("[^\\w\\d]");
+  return s.replace(re, "_");
 }
 
 void CExportDatabaseThread::slotAbort() {

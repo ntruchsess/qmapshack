@@ -368,12 +368,12 @@ set( SRCS
 )
 
 
-if(Qt5DBus_FOUND)
+if(Qt6DBus_FOUND)
 set( SRCS
     ${SRCS}
     device/CDeviceWatcherLinux.cpp
 )
-endif(Qt5DBus_FOUND)
+endif(Qt6DBus_FOUND)
 
 
 if (APPLE)
@@ -746,12 +746,12 @@ set( HDRS
 )
 
 
-if(Qt5DBus_FOUND)
+if(Qt6DBus_FOUND)
 set( HDRS
     ${HDRS}
     device/CDeviceWatcherLinux.h
 )
-endif(Qt5DBus_FOUND)
+endif(Qt6DBus_FOUND)
 
 
 if(APPLE)
@@ -906,8 +906,8 @@ set( RCS
 # Some Qt magic
 ###############################################################################################
 
-qt5_wrap_ui(UI_HDRS ${UIS})
-qt5_add_resources(RC_SRCS ${RCS})
+qt6_wrap_ui(UI_HDRS ${UIS})
+qt6_add_resources(RC_SRCS ${RCS})
 
 ###############################################################################################
 # Translation related stuff
@@ -977,22 +977,23 @@ if(${DEVELOPMENT_VERSION})
     )
 endif(${DEVELOPMENT_VERSION})
 
-if(Qt5DBus_FOUND)
-    set(DBUS_LIB Qt5::DBus)
-else(Qt5DBus_FOUND)
+if(Qt6DBus_FOUND)
+    set(DBUS_LIB Qt6::DBus)
+else(Qt6DBus_FOUND)
     set(DBUS_LIB)
-endif(Qt5DBus_FOUND)
+endif(Qt6DBus_FOUND)
 
 target_link_libraries(${APPLICATION_NAME}
-    Qt5::Widgets
-    Qt5::Xml
-    Qt5::Sql
-    Qt5::PrintSupport
-    Qt5::UiTools
-    Qt5::Network
-    Qt5::WebEngineWidgets
-    Qt5::Qml
-    Qt5::Help
+    Qt6::Widgets
+    Qt6::Xml
+    Qt6::Sql
+    Qt6::PrintSupport
+    Qt6::UiTools
+    Qt6::Network
+    Qt6::WebEngineWidgets
+    Qt6::Qml
+    Qt6::Help
+    Qt6::Core5Compat
     ${DBUS_LIB}
     ${GDAL_LIBRARIES}
     ${PROJ_LIBRARIES}

@@ -80,7 +80,7 @@ QTextCodec* CGarminTyp::getCodec(quint16 codepage) {
 bool CGarminTyp::parseHeader(QDataStream& in) {
   int i;
   QString garmintyp;
-  quint8 byte;
+  char byte;
 
   for (i = 0; i < 10; ++i) {
     in >> byte;

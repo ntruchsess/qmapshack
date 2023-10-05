@@ -121,7 +121,7 @@ bool COverlayCutMap::drawFx(QPainter& p, CCanvas::redraw_e needsRedraw) {
 }
 
 void COverlayCutMap::mouseMoveEventFx(QMouseEvent* e) {
-  QPointF pt = e->pos();
+  QPointF pt = e->position();
   context->convertScreen2Map(pt);
 
   switch (mode) {
@@ -146,7 +146,7 @@ void COverlayCutMap::mouseMoveEventFx(QMouseEvent* e) {
 }
 
 void COverlayCutMap::mouseReleaseEventFx(QMouseEvent* e) {
-  QPointF pt = e->pos();
+  QPointF pt = e->position();
   context->convertScreen2Map(pt);
 
   Qt::MouseButton button = e->button();

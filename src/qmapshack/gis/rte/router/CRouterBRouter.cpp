@@ -365,13 +365,13 @@ int CRouterBRouter::synchronousRequest(const QVector<QPointF>& points, const QLi
         }
         const QString& commentTxt = node.toComment().data();
         // ' track-length = 180864 filtered ascend = 428 plain-ascend = -172 cost=270249 '
-        const QRegExp rxAscDes(
+        const static QRegularExpression rxAscDes(
             "(\\s*track-length\\s*=\\s*)(-?\\d+)(\\s*)(filtered "
             "ascend\\s*=\\s*-?\\d+)(\\s*)(plain-ascend\\s*=\\s*-?\\d+)(\\s*)(cost\\s*=\\s*)(-?\\d+)(\\s*)");
-        int pos = rxAscDes.indexIn(commentTxt);
-        if (pos > -1) {
+        QRegularExpressionMatch match;
+        if ((match = rxAscDes.match(commentTxt)).hasMatch()) {
           bool ok;
-          *costs = rxAscDes.cap(9).toDouble(&ok);
+          *costs = match.captured(9).toDouble(&ok);
           if (!ok) {
             *costs = -1;
           }

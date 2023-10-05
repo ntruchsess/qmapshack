@@ -17,6 +17,7 @@
 **********************************************************************************************/
 
 #include <QtWidgets>
+#include <QStringConverter>
 
 #include "CMainWindow.h"
 #include "gis/trk/CGisItemTrk.h"
@@ -96,10 +97,11 @@ static QStringList writeCompeTime(const QDateTime& t, bool isTrack) {
 
 static QDateTime readCompeTime(QString str, bool isTrack) {
   QDateTime timestamp;
-  QRegExp re("([0-9]{2})-([A-Za-z]{3})-.*");
+  const static QRegularExpression re("^([0-9]{2})-([A-Za-z]{3})-.*$");
+  QRegularExpressionMatch match;
 
-  if (re.exactMatch(str)) {
-    QString monthStr = re.cap(2);
+  if ((match = re.match(str)).hasMatch()) {
+    QString monthStr = match.captured(2);
 
     QHash<QString, QString> monthStr2Num{{"JAN", "01"}, {"FEB", "02"}, {"MAR", "03"}, {"APR", "04"},
                                          {"MAY", "05"}, {"JUN", "06"}, {"JUL", "07"}, {"AUG", "08"},
@@ -172,7 +174,7 @@ bool CGisItemTrk::saveTwoNav(const QString& filename) {
   IGisProject* project = getParentProject();
 
   QTextStream out(&file);
-  out.setCodec(QTextCodec::codecForName("UTF-8"));
+  out.setEncoding(QStringConverter::Utf8);
   out << Qt::bom;
   out << "B  UTF-8" << Qt::endl;
   out << "G  WGS 84" << Qt::endl;
@@ -294,7 +296,7 @@ bool CGisItemTrk::readTwoNav(const QString& filename) {
     return false;
   }
   QTextStream in(&file);
-  in.setCodec(QTextCodec::codecForName("UTF-8"));
+  in.setEncoding(QStringConverter::Utf8);
 
   CTrackData::trkseg_t seg;
 
@@ -303,9 +305,9 @@ bool CGisItemTrk::readTwoNav(const QString& filename) {
     switch (line[0].toLatin1()) {
       case 'B': {
         QString name = line.mid(1).simplified();
-        QTextCodec* codec = QTextCodec::codecForName(name.toLatin1());
-        if (codec) {
-          in.setCodec(codec);
+        std::optional<QStringConverter::Encoding> encoding = QStringConverter::encodingForName(name.toLatin1());
+        if (encoding) {
+          in.setEncoding(*encoding);
         }
         break;
       }
@@ -511,7 +513,7 @@ bool CTwoNavProject::loadWpts(const QString& filename, const QDir& dir) {
     return false;
   }
   QTextStream in(&file);
-  in.setCodec(QTextCodec::codecForName("UTF-8"));
+  in.setEncoding(QStringConverter::Utf8);
 
   while (!line.isEmpty()) {
     line = in.readLine();
@@ -519,9 +521,9 @@ bool CTwoNavProject::loadWpts(const QString& filename, const QDir& dir) {
     switch (line[0].toLatin1()) {
       case 'B': {
         QString name = line.mid(1).simplified();
-        QTextCodec* codec = QTextCodec::codecForName(name.toLatin1());
-        if (codec) {
-          in.setCodec(codec);
+        std::optional<QStringConverter::Encoding> encoding = QStringConverter::encodingForName(name.toLatin1());
+        if (encoding) {
+          in.setEncoding(*encoding);
         }
         break;
       }

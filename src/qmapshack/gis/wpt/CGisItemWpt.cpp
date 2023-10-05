@@ -209,7 +209,7 @@ QString CGisItemWpt::getLastName(const QString& name) {
     if (idx == 0) {
       lastName = QString::number(lastName.toInt() + 1);
     } else if (idx < s) {
-      lastName = lastName.left(idx) + QString::number(lastName.midRef(idx).toInt() + 1);
+      lastName = lastName.left(idx) + QString::number(QStringView(lastName).sliced(idx).toInt() + 1);
     }
   }
 
@@ -328,12 +328,12 @@ QString CGisItemWpt::getInfo(quint32 feature) const {
       }
     }
   } else {
-    if (desc.count()) {
+    if (desc.size()) {
       if (str.size() > initialSize) {
         str += "<br/>\n";
       }
 
-      if ((feature & eFeatureShowFullText) || (desc.count() < 300)) {
+      if ((feature & eFeatureShowFullText) || (desc.size() < 300)) {
         str += desc;
       } else {
         str += desc.left(297) + "...";
@@ -342,12 +342,12 @@ QString CGisItemWpt::getInfo(quint32 feature) const {
   }
 
   QString cmt = removeHtml(wpt.cmt).simplified();
-  if ((cmt != desc) && cmt.count()) {
+  if ((cmt != desc) && cmt.size()) {
     if (str.size() > initialSize) {
       str += "<br/>\n";
     }
 
-    if ((feature & eFeatureShowFullText) || (cmt.count() < 300)) {
+    if ((feature & eFeatureShowFullText) || (cmt.size() < 300)) {
       str += cmt;
     } else {
       str += cmt.left(297) + "...";

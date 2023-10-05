@@ -65,13 +65,13 @@ void IAppSetup::prepareGdal(QString gdalDir, QString projDir) {
 QString IAppSetup::path(QString path, QString subdir, bool mkdir, QString debugName) {
   QDir pathDir(path);
 
-  if (subdir != 0) {
+  if (!subdir.isEmpty()) {
     pathDir = QDir(pathDir.absoluteFilePath(subdir));
   }
   if (mkdir && !pathDir.exists()) {
     pathDir.mkpath(pathDir.absolutePath());
     qDebug() << debugName << "path created" << pathDir.absolutePath();
-  } else if (debugName != 0) {
+  } else if (!debugName.isEmpty()) {
     qDebug() << debugName << "path" << pathDir.absolutePath();
   }
   return pathDir.absolutePath();

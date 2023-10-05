@@ -42,7 +42,7 @@ void CMouseAdapter::unfocus() { delegate->unfocus(); }
 
 void CMouseAdapter::mousePressEvent(QMouseEvent* e) {
   // set firstPos and mouseDidMove to suppress small movements when clicking
-  startMouseMove(e->pos());
+  startMouseMove(e->position().toPoint());
   buttonPressTime.start();
   if (e->button() == Qt::LeftButton) {
     lastPos = firstPos;
@@ -56,7 +56,7 @@ void CMouseAdapter::mousePressEvent(QMouseEvent* e) {
 }
 
 void CMouseAdapter::mouseMoveEvent(QMouseEvent* e) {
-  const QPoint& pos = e->pos();
+  const QPoint& pos = e->position().toPoint();
 
   // do not take the mouse as moving unless it has been moved
   // by significant distance away from starting point.
@@ -83,18 +83,18 @@ void CMouseAdapter::mouseReleaseEvent(QMouseEvent* e) {
   if (e->button() == Qt::LeftButton) {
     // suppress clicks when mouse was moved for more a few pixel
     if (mouseDidMove) {
-      delegate->dragFinished(e->pos());
+      delegate->dragFinished(e->position().toPoint());
     }
     // suppress clicks when pressing too long or after zooming or display of CProgressDialog
     else if (!ignoreClick && buttonPressTime.elapsed() < clickTimeout) {
-      delegate->leftClicked(e->pos());
+      delegate->leftClicked(e->position().toPoint());
     }
   }
 
   mouseDidMove = false;
 }
 
-void CMouseAdapter::mouseDoubleClickEvent(QMouseEvent* e) { delegate->doubleClicked(e->pos()); }
+void CMouseAdapter::mouseDoubleClickEvent(QMouseEvent* e) { delegate->doubleClicked(e->position().toPoint()); }
 
 void CMouseAdapter::wheelEvent(QWheelEvent* e) {
   // suppress little mouse-movements that are likely to happen when scrolling the mousewheel.
@@ -132,9 +132,9 @@ void CMouseAdapter::afterMouseLostEvent(QMouseEvent* e) {
   // is at an arbitrary position.
   if (e->type() == QEvent::MouseMove) {
     // suppress jump of map when touching screen right afterwards
-    lastPos = e->pos();
+    lastPos = e->position().toPoint();
     // consider the move starting at this position
-    startMouseMove(e->pos());
+    startMouseMove(e->position().toPoint());
   }
 }
 

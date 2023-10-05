@@ -136,7 +136,7 @@ void CPhotoViewer::tryIdxStep(int delta) {
 }
 
 void CPhotoViewer::mousePressEvent(QMouseEvent* e) {
-  QPoint pos = e->pos();
+  QPoint pos = e->position().toPoint();
 
   if (rectClose.contains(pos)) {
     reject();

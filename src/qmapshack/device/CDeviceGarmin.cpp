@@ -29,6 +29,8 @@
 #include "gis/tcx/CTcxProject.h"
 #include "gis/wpt/CGisItemWpt.h"
 
+const QRegularExpression CDeviceGarmin::invalid_chars_re = QRegularExpression("[^A-Za-z0-9_]");
+
 CDeviceGarmin::CDeviceGarmin(const QString& path, const QString& key, const QString& model,
                              const QString& garminDeviceXml, QTreeWidget* parent)
     : IDevice(path, eTypeGarmin, key, parent), cntImages(0) {
@@ -186,7 +188,7 @@ void CDeviceGarmin::reorderProjects(IGisProject* project) {
 
 QString CDeviceGarmin::simplifiedName(IGisProject* project) {
   QString name = project->getName();
-  return name.remove(QRegExp("[^A-Za-z0-9_]"));
+  return name.remove(invalid_chars_re);
 }
 
 QString CDeviceGarmin::createFileName(IGisProject* project, const QString& path, const QString& suffix) {
@@ -258,7 +260,7 @@ void CDeviceGarmin::saveImages(CGisItemWpt& wpt) {
     QString filename;
     for (const CGisItemWpt::image_t& image : images) {
       filename = image.info;
-      filename = filename.remove(QRegExp("[^A-Za-z0-9_]"));
+      filename = filename.remove(invalid_chars_re);
 
       if (!filename.endsWith("jpg")) {
         filename += ".jpg";

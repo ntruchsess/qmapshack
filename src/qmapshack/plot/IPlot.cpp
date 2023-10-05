@@ -221,7 +221,7 @@ void IPlot::leaveEvent(QEvent* /*e*/) {
   update();
 }
 
-void IPlot::enterEvent(QEvent* /*e*/) {
+void IPlot::enterEvent(QEnterEvent* /*e*/) {
   needsRedraw = true;
   QCursor cursor = QCursor(QPixmap(":/cursors/cursorArrow.png"), 0, 0);
   CCanvas::setOverrideCursor(cursor, "IPlot::enterEvent");
@@ -273,7 +273,7 @@ void IPlot::mouseMoveEvent(QMouseEvent* e) {
     return;
   }
 
-  QPoint pos = e->pos();
+  QPoint pos = e->position().toPoint();
   if (!mouseDidMove && (e->buttons() == Qt::LeftButton) &&
       ((pos - posLast).manhattanLength() >= CMouseAdapter::minimalMouseMovingDistance)) {
     mouseDidMove = true;
@@ -343,7 +343,7 @@ void IPlot::mousePressEvent(QMouseEvent* e) {
   }
 
   mouseDidMove = false;
-  posLast = e->pos();
+  posLast = e->position().toPoint();
 }
 
 void IPlot::mouseReleaseEvent(QMouseEvent* e) {
@@ -375,7 +375,7 @@ void IPlot::mouseReleaseEvent(QMouseEvent* e) {
 }
 
 bool IPlot::mouseReleaseEventSimple(QMouseEvent* e) {
-  QPoint pos = e->pos();
+  QPoint pos = e->position().toPoint();
   posMouse1 = graphAreaContainsMousePos(pos) ? pos : NOPOINT;
 
   // set point of focus at track object
@@ -392,7 +392,7 @@ bool IPlot::mouseReleaseEventSimple(QMouseEvent* e) {
 bool IPlot::mouseReleaseEventNormal(QMouseEvent* e) {
   bool wasProcessed = true;
 
-  QPoint pos = e->pos();
+  QPoint pos = e->position().toPoint();
   posMouse1 = graphAreaContainsMousePos(pos) ? pos : NOPOINT;
 
   // set point of focus at track object
@@ -1183,8 +1183,8 @@ void IPlot::drawActivities(QPainter& p) {
     const CTrackData::trkpt_t* trkptEnd = trkData.getTrkPtByTotalIndex(range.idxTotalEnd);
 
     if (data->axisType == CPlotData::eAxisTime) {
-      x1 = data->x().val2pt(trkptBeg->time.toTime_t());
-      x2 = data->x().val2pt(trkptEnd->time.toTime_t());
+      x1 = data->x().val2pt(trkptBeg->time.toSecsSinceEpoch());
+      x2 = data->x().val2pt(trkptEnd->time.toSecsSinceEpoch());
     } else {
       x1 = data->x().val2pt(trkptBeg->distance);
       x2 = data->x().val2pt(trkptEnd->distance);

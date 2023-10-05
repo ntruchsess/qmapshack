@@ -56,9 +56,10 @@ void CRouterBRouterLocal::startBRouter() {
   //     CLASSPATH=../brouter.jar
   //     java $JAVA_OPTS -cp $CLASSPATH btools.server.RouteServer ../segments4 ../profiles2 ../customprofiles 17777 1
 
+  const static QRegularExpression re("\\s+");
   if (brouterState == QProcess::NotRunning) {
     QStringList args;
-    args << brouter.setup->localJavaOpts.split(QRegExp("\\s+"));
+    args << brouter.setup->localJavaOpts.split(re);
     args << QString("-DmaxRunningTime=%1").arg(brouter.setup->localMaxRunningTime);
     args << "-cp";
     args << brouter.setup->localBRouterJar;

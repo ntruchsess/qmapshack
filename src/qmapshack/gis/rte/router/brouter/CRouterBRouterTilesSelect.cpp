@@ -36,17 +36,17 @@ const int CRouterBRouterTilesSelect::minTileLon = -85;
 const int CRouterBRouterTilesSelect::maxTileLon = 85;
 const int CRouterBRouterTilesSelect::tileSize = 5;
 // pattern for filenames of tiles: 'E10_N20.rd5'
-const QString CRouterBRouterTilesSelect::patternTileName = QString("([EW])(\\d{1,3})_([NS])(\\d{1,3})\\.rd5$");
-const QRegExp CRouterBRouterTilesSelect::regExpTileName = QRegExp(CRouterBRouterTilesSelect::patternTileName);
+const QString CRouterBRouterTilesSelect::patternTileName = "([EW])(\\d{1,3})_([NS])(\\d{1,3})\\.rd5$";
+const QRegularExpression CRouterBRouterTilesSelect::regExpTileName(CRouterBRouterTilesSelect::patternTileName);
 // pattern for tiles date parsing: '16-Feb-2017 20:48  '
 const QString CRouterBRouterTilesSelect::patternDate =
     "(\\d{1,2}-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-\\d{4} \\d{1,2}:\\d{2})";
-const QRegExp CRouterBRouterTilesSelect::regExpDate = QRegExp(CRouterBRouterTilesSelect::patternDate);
+const QRegularExpression CRouterBRouterTilesSelect::regExpDate(CRouterBRouterTilesSelect::patternDate);
 const QString CRouterBRouterTilesSelect::formatDate = "dd-MMM-yyyy HH:mm";
-const QLocale CRouterBRouterTilesSelect::localeDate = QLocale(QLocale::English, QLocale::UnitedStates);
+const QLocale CRouterBRouterTilesSelect::localeDate(QLocale::English, QLocale::UnitedStates);
 // pattern for tiles size parsing: 8.2M 271K 9.3K
 const QString CRouterBRouterTilesSelect::patternSize = " {0,2}(\\d{1,3}|\\d\\.\\d)([KMG])";
-const QRegExp CRouterBRouterTilesSelect::regExpSize = QRegExp(CRouterBRouterTilesSelect::patternSize);
+const QRegularExpression CRouterBRouterTilesSelect::regExpSize(CRouterBRouterTilesSelect::patternSize);
 
 CRouterBRouterTilesSelect::CRouterBRouterTilesSelect(QWidget* parent) : QWidget(parent) {
   for (int x = minTileLat; x < maxTileLat; x += tileSize) {
@@ -253,7 +253,7 @@ void CRouterBRouterTilesSelect::initialize()
 
     const QStringList& segments = dir.entryList();
     for (const QString& segment : segments) {
-      if (regExpTileName.indexIn(segment) > -1) {
+      if (regExpTileName.match(segment).hasMatch()) {
         const QPoint& tile = tileFromFileName(segment);
         if (tile != noTile) {
           CRouterBRouterTilesStatus* status = getTileStatus(tile);
@@ -322,7 +322,7 @@ void CRouterBRouterTilesSelect::afterSlotLoadOnlineTilesRequestFinishedRunJavasc
 
     const QString& tileName = tileMap.value("name").toString();
     // only anchors matching the desired pattern
-    if (regExpTileName.indexIn(tileName) > -1) {
+    if (regExpTileName.match(tileName).hasMatch()) {
       const QPoint& tile = tileFromFileName(tileName);
 
       if (tile != noTile) {
@@ -332,7 +332,7 @@ void CRouterBRouterTilesSelect::afterSlotLoadOnlineTilesRequestFinishedRunJavasc
 
           const QString& date = tileMap.value("date").toString();
 
-          if (regExpDate.indexIn(date) < 0) {
+          if (!regExpDate.match(date).hasMatch()) {
             segmentsError(tr("cannot parse: %1 is not a date").arg(date));
             update();
             return;
@@ -342,7 +342,8 @@ void CRouterBRouterTilesSelect::afterSlotLoadOnlineTilesRequestFinishedRunJavasc
 
           const QString& size = tileMap.value("size").toString();
 
-          if (regExpSize.indexIn(size) < 0) {
+          QRegularExpressionMatch sizeMatch = regExpSize.match(size);
+          if (!sizeMatch.hasMatch()) {
             bool ok = false;
             status->remoteSize = size.toLongLong(&ok, 10);
             if (!ok) {
@@ -351,10 +352,10 @@ void CRouterBRouterTilesSelect::afterSlotLoadOnlineTilesRequestFinishedRunJavasc
               return;
             }
           } else {
-            status->remoteSize = regExpSize.cap(1).toFloat() * (regExpSize.cap(2) == "M"   ? 1048576
-                                                                : regExpSize.cap(2) == "G" ? 1073741824
-                                                                : regExpSize.cap(2) == "K" ? 1024
-                                                                                           : 1);
+            status->remoteSize = sizeMatch.captured(1).toFloat() * (sizeMatch.captured(2) == "M"   ? 1048576
+                                                                    : sizeMatch.captured(2) == "G" ? 1073741824
+                                                                    : sizeMatch.captured(2) == "K" ? 1024
+                                                                                                   : 1);
           }
 
           if (status->isLocal && status->remoteDate > status->localDate) {
@@ -387,9 +388,10 @@ QString CRouterBRouterTilesSelect::formatSize(const qint64 size) {
 }
 
 QPoint CRouterBRouterTilesSelect::tileFromFileName(const QString& fileName) {
-  if (regExpTileName.indexIn(fileName) > -1) {
-    return QPoint(regExpTileName.cap(2).toInt() * (regExpTileName.cap(1) == "E" ? 1 : -1),
-                  regExpTileName.cap(4).toInt() * (regExpTileName.cap(3) == "N" ? 1 : -1));
+  QRegularExpressionMatch tileMatch = regExpTileName.match(fileName);
+  if (tileMatch.hasMatch()) {
+    return QPoint(tileMatch.captured(2).toInt() * (tileMatch.captured(1) == "E" ? 1 : -1),
+                  tileMatch.captured(4).toInt() * (tileMatch.captured(3) == "N" ? 1 : -1));
   } else {
     return noTile;
   }

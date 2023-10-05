@@ -532,10 +532,11 @@ void CRouterBRouterSetup::loadOnlineVersionFinished(QNetworkReply* reply) {
     return;
   }
   const QString gpx(reply->readAll());
-  const QRegExp reVersion = QRegExp("^<\\?xml.+<gpx.+creator=\"(.*)\"");
-
-  if (reVersion.indexIn(gpx) > -1) {
-    parseBRouterVersion(reVersion.cap(1));
+  const static QRegularExpression re("^<\\?xml.+<gpx.+creator=\"(.*)\"");
+  QRegularExpressionMatch match;
+  
+  if ((match = re.match(gpx)).hasMatch()) {
+    parseBRouterVersion(match.captured(1));
     return;
   }
   emit sigError("invalid reply", "response is not brouter-gpx");
@@ -544,15 +545,16 @@ void CRouterBRouterSetup::loadOnlineVersionFinished(QNetworkReply* reply) {
 void CRouterBRouterSetup::parseBRouterVersion(const QString& text) {
   // version string is either like "BRouter 1.4.9 / 24092017"
   // or (without the date) like "BRouter-1.4.9"
-  QRegExp reVersion("\\bBRouter[- ](\\d+)\\.(\\d+)\\.(\\d+)\\b");
-  if (reVersion.indexIn(text) > -1) {
+  const static QRegularExpression re("\\bBRouter[- ](\\d+)\\.(\\d+)\\.(\\d+)\\b");
+  QRegularExpressionMatch match;
+  if ((match = re.match(text)).hasMatch()) {
     bool ok;
-    versionMajor = reVersion.cap(1).toInt(&ok);
+    versionMajor = match.captured(1).toInt(&ok);
     if (ok) {
-      versionMinor = reVersion.cap(2).toInt(&ok);
+      versionMinor = match.captured(2).toInt(&ok);
     }
     if (ok) {
-      versionPatch = reVersion.cap(3).toInt(&ok);
+      versionPatch = match.captured(3).toInt(&ok);
     }
     if (ok) {
       emit sigVersionChanged();

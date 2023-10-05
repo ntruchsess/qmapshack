@@ -19,6 +19,7 @@
 #include "IGarminStrTbl.h"
 
 #include <QtCore>
+#include <QTextCodec>
 
 #include "helpers/CFileExt.h"
 #include "helpers/Platform.h"

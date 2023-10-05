@@ -59,7 +59,7 @@ void IItem::mousePressEventFx(QMouseEvent* e) {
   }
 
   if (e->button() == Qt::LeftButton) {
-    lastPos = e->pos();
+    lastPos = e->position().toPoint();
     firstPos = lastPos;
     mapIsMoving = true;
     mapDidMove = false;
@@ -71,7 +71,7 @@ void IItem::mouseMoveEventFx(QMouseEvent* e) {
     return;
   }
 
-  const QPoint& point = e->pos();
+  const QPoint& point = e->position().toPoint();
   if (mapIsMoving) {
     if ((point - firstPos).manhattanLength() >= 4) {
       drawContext->move(point - lastPos);
@@ -90,7 +90,7 @@ void IItem::mouseReleaseEventFx(QMouseEvent* e) {
   }
 
   if (e->button() == Qt::LeftButton) {
-    lastPos = e->pos();
+    lastPos = e->position().toPoint();
     mapIsMoving = false;
     mapDidMove = false;
   }

@@ -597,7 +597,7 @@ void CCanvas::mousePressEvent(QMouseEvent* e) {
 }
 
 void CCanvas::mouseMoveEvent(QMouseEvent* e) {
-  QPointF pos = e->pos();
+  QPointF pos = e->position();
   map->convertPx2Rad(pos);
   qreal ele = dem->getElevationAt(pos, true);
   qreal slope = dem->getSlopeAt(pos, true);
@@ -649,7 +649,7 @@ void CCanvas::wheelEvent(QWheelEvent* e) {
   update();
 }
 
-void CCanvas::enterEvent(QEvent* e) {
+void CCanvas::enterEvent(QEnterEvent* e) {
   if (labelHelp->isVisible()) {
     return;
   }

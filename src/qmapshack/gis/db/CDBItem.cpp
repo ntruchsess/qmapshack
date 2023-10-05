@@ -74,7 +74,7 @@ void CDBItem::updateAge() {
     }
 
     if (timestamp.isValid()) {
-      quint64 diff = QDateTime::currentDateTimeUtc().toTime_t() - timestamp.toTime_t();
+      quint64 diff = timestamp.secsTo(QDateTime::currentDateTimeUtc());
       if (diff < (60 * 60)) {
         setText(CGisListDB::eColumnTime, tr("%1 min.").arg(diff / 60));
       } else if (diff < (60 * 60 * 24)) {

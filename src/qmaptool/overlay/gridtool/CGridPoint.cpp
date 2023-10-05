@@ -68,7 +68,7 @@ bool CGridPoint::drawFx(QPainter& p, CCanvas::redraw_e needsRedraw) {
 }
 
 void CGridPoint::mouseMoveEventFx(QMouseEvent* e) {
-  QPointF pt = e->pos();
+  QPointF pt = e->position();
 
   switch (state) {
     case eStateMove:

@@ -26,7 +26,7 @@
 #=============================================================================
 #
 # funtion translate_ts(qmFiles
-#                           [USE_QT5 [Yes | No]]
+#                           [USE_QT6 [Yes | No]]
 #                           [UPDATE_TRANSLATIONS [Yes | No]]
 #                           [UPDATE_OPTIONS] update_options
 #                           SOURCES <sources>
@@ -39,7 +39,7 @@
 #       qmFiles The generated compiled translations (.qm) files
 #
 #     Input:
-#       USE_QT5 Optional flag to choose between Qt4 and Qt5. Defaults to Qt5
+#       USE_QT6 Optional flag to choose between Qt4 and Qt5. Defaults to Qt5
 #
 #       UPDATE_TRANSLATIONS Optional flag. Setting it to Yes, extracts and
 #                           compiles the translations. Setting it No, only
@@ -68,7 +68,7 @@ cmake_minimum_required(VERSION 2.8.3 FATAL_ERROR)
 include(Qt5PatchedLinguistToolsMacros)
 
 function(translate_ts qmFiles)
-    set(oneValueArgs USE_QT5 UPDATE_TRANSLATIONS TEMPLATE TRANSLATION_DIR INSTALL_DIR COMPONENT)
+    set(oneValueArgs USE_QT6 UPDATE_TRANSLATIONS TEMPLATE TRANSLATION_DIR INSTALL_DIR COMPONENT)
     set(multiValueArgs SOURCES UPDATE_OPTIONS)
     cmake_parse_arguments(TR "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -81,8 +81,8 @@ function(translate_ts qmFiles)
     endif()
     message(STATUS "")
 
-    if (NOT DEFINED TR_USE_QT5)
-        set(TR_USE_QT5 "Yes")
+    if (NOT DEFINED TR_USE_QT6)
+        set(TR_USE_QT6 "Yes")
     endif()
 
     if(NOT DEFINED TR_TEMPLATE)
@@ -96,7 +96,25 @@ function(translate_ts qmFiles)
     file(GLOB tsFiles "${TR_TRANSLATION_DIR}/${TR_TEMPLATE}_*.ts")
     set(templateFile "${TR_TRANSLATION_DIR}/${TR_TEMPLATE}.ts")
 
-    if(TR_USE_QT5)
+    if(TR_USE_QT6)
+        # Qt6
+        if (TR_UPDATE_TRANSLATIONS)
+            qt6_add_translations(QMS TS_FILES ${templateFile}
+                SOURCES ${TR_SOURCES}
+                OPTIONS ${TR_UPDATE_OPTIONS}
+            )
+            qt6_add_translations(QM TS_FILES ${tsFiles}
+                SOURCES ${TR_SOURCES}
+                OPTIONS ${TR_UPDATE_OPTIONS}
+            )
+        else()
+            add_custom_target("${APPLICATION_NAME}_qm")
+            qt6_add_lrelease("${APPLICATION_NAME}_qm" TS_FILES ${tsFiles} ${templateFile}
+                NO_TARGET_DEPENDENCY
+                QM_FILES_OUTPUT_VARIABLE QM
+            )
+        endif()
+    elseif(TR_USE_QT5)
         # Qt5
         if (TR_UPDATE_TRANSLATIONS)
             qt5_patched_create_translation(QMS

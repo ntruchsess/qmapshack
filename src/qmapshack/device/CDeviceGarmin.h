@@ -61,6 +61,8 @@ class CDeviceGarmin : public IDevice {
   int cntImages = 0;
 
   CDeviceGarminArchive* archive = nullptr;
+
+  static const QRegularExpression invalid_chars_re;
 };
 
 #endif  // CDEVICEGARMIN_H

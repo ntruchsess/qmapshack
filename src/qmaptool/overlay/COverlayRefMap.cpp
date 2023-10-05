@@ -248,7 +248,7 @@ QPointF COverlayRefMap::isCloseTo(QPointF pt) {
 }
 
 void COverlayRefMap::mouseMoveEventFx(QMouseEvent* e) {
-  QPointF pt = e->pos();
+  QPointF pt = e->position();
   context->convertScreen2Map(pt);
 
   switch (mode) {
@@ -271,7 +271,7 @@ void COverlayRefMap::mouseMoveEventFx(QMouseEvent* e) {
 }
 
 void COverlayRefMap::mouseReleaseEventFx(QMouseEvent* e) {
-  QPointF pt = e->pos();
+  QPointF pt = e->position();
   context->convertScreen2Map(pt);
 
   Qt::MouseButton button = e->button();
@@ -559,13 +559,14 @@ void COverlayRefMap::slotLoadGcp() {
   file.open(QIODevice::ReadOnly);
   QString line = file.readLine();
   if (line.trimmed() == "#V1.0") {
-    QRegExp re1("^-gcp\\s(-{0,1}[0-9]+)\\s(-{0,1}[0-9]+)\\s(-{0,1}[0-9\\.]+)\\s(-{0,1}[0-9\\.]+).*$");
+    const static QRegularExpression re1("^-gcp\\s(-{0,1}[0-9]+)\\s(-{0,1}[0-9]+)\\s(-{0,1}[0-9\\.]+)\\s(-{0,1}[0-9\\.]+).*$");
+    QRegularExpressionMatch match;
 
     qint32 cnt = 1;
     while (1) {
-      if (re1.exactMatch(line)) {
-        QPointF ptPtx(re1.cap(1).toDouble(), re1.cap(2).toDouble());
-        QPointF ptRef(re1.cap(4).toDouble(), re1.cap(3).toDouble());
+      if ((match = re1.match(line)).hasMatch()) {
+        QPointF ptPtx(match.captured(1).toDouble(), match.captured(2).toDouble());
+        QPointF ptRef(match.captured(4).toDouble(), match.captured(3).toDouble());
         new COverlayRefMapPoint(cnt++, ptRef, ptPtx, treeWidget);
       }
 

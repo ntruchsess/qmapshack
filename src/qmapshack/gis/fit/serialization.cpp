@@ -24,7 +24,7 @@
 
 static const qreal degrees = 180.0;
 static const qreal twoPow31 = qPow(2, 31);
-static const uint sec1970to1990 = 631065600;
+static const QDateTime sec1970to1990 = QDateTime::fromSecsSinceEpoch(631065600, QTimeZone::utc());
 
 /**
  * converts the semicircle to the WGS-84 geoids (Degrees Decimal Minutes (DDD MM.MMM)).
@@ -39,9 +39,7 @@ static qreal toDegree(qint32 semicircles) { return semicircles * (degrees / twoP
    timestamp: seconds since UTC 00:00 Dec 31 1989
  */
 static QDateTime toDateTime(quint32 timestamp) {
-  QDateTime dateTime;
-  dateTime.setTime_t(sec1970to1990 + timestamp);
-  return dateTime.toUTC();
+  return sec1970to1990.addSecs(timestamp);
 }
 
 static QString dateTimeAsString(quint32 timestamp) {

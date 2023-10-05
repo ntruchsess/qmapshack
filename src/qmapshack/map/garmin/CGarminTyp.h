@@ -20,6 +20,7 @@
 #define CGARMINTYP_H
 
 #include <QtGui>
+#include <QTextCodec>
 
 class CGarminTyp {
   Q_DECLARE_TR_FUNCTIONS(CGarminTyp)

@@ -98,7 +98,7 @@ void CGridSelArea::mouseMoveEventFx(QMouseEvent* e) {
   switch (state) {
     case eStateIdle: {
       corner_e _corner = corner;
-      QPoint pos = e->pos();
+      QPoint pos = e->position().toPoint();
       if (rectTopLeft.contains(pos)) {
         offset = pos - rectTopLeft.topLeft();
         corner = eCornerTopLeft;
@@ -123,7 +123,7 @@ void CGridSelArea::mouseMoveEventFx(QMouseEvent* e) {
     }
 
     case eStateMove: {
-      QPointF pos = e->pos() - offset;
+      QPointF pos = e->position() - offset;
       context->convertScreen2Map(pos);
 
       switch (corner) {
